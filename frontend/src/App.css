@@ -1,0 +1,7 @@
+/* App-level layout rules only — all design tokens in index.css */
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
