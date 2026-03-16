@@ -103,7 +103,7 @@ export default function ResultsHistory() {
                     <td style={{ padding: '16px' }}>
                       <button 
                         className="btn btn-sm btn-outline-primary"
-                        onClick={() => navigate(`/results/${r.id}`)}
+                        onClick={() => navigate(`/results/${r.attempt_id}`)}
                         disabled={r.status !== 'published'}
                         style={{ padding: '4px 12px', fontSize: '0.8rem' }}
                       >

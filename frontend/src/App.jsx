@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import { useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import StudentLogin from './pages/StudentLogin'
 import TeacherLogin from './pages/TeacherLogin'
@@ -21,6 +22,16 @@ import AdminResults from './pages/AdminResults'
 import APITest from './pages/APITest'
 import './App.css'
 
+// BUG-9 Fix: Redirect users to their role-specific dashboard on root
+function RoleBasedRedirect() {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role === 'admin') return <Navigate to="/admin" replace />
+  if (user.role === 'teacher') return <Navigate to="/teacher" replace />
+  return <Dashboard />
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -38,8 +49,8 @@ function App() {
             <Route 
               path="/" 
               element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <Dashboard />
+                <ProtectedRoute allowedRoles={['student', 'teacher', 'admin']}>
+                  <RoleBasedRedirect />
                 </ProtectedRoute>
               } 
             />

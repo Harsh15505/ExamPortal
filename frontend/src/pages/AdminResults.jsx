@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { examAPI } from '../api/exams'
 
 export default function AdminResults() {
+  const navigate = useNavigate()
   const [exams, setExams] = useState([])
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(true)
@@ -169,13 +171,20 @@ export default function AdminResults() {
                       </span>
                     </td>
                     <td style={{ padding: '16px' }}>
-                      {r.status === 'draft' ? (
-                        <button className="btn btn-sm btn-success" onClick={() => publishResult(r.id)} style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
-                          Publish
+                      <div className="d-flex gap-2">
+                        <button 
+                          className="btn btn-sm btn-outline-primary" 
+                          onClick={() => navigate(`/results/${r.attempt_id}`)}
+                          style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                        >
+                          View
                         </button>
-                      ) : (
-                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>Active</span>
-                      )}
+                        {r.status === 'draft' && (
+                          <button className="btn btn-sm btn-success" onClick={() => publishResult(r.id)} style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
+                            Publish
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

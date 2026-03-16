@@ -166,10 +166,40 @@ class ExamViewSet(viewsets.ModelViewSet):
         for idx, q_id in enumerate(question_ids):
             try:
                 question = Question.objects.get(id=q_id)
+                
+                # Get options
+                options = [
+                    ('a', question.option_a),
+                    ('b', question.option_b),
+                    ('c', question.option_c),
+                    ('d', question.option_d)
+                ]
+                
+                # Shuffle if randomization is requested
+                if randomize:
+                    import random
+                    random.shuffle(options)
+                
+                # Map shuffled options
+                shuffled_data = {
+                    'shuffled_option_a': options[0][1],
+                    'shuffled_option_b': options[1][1],
+                    'shuffled_option_c': options[2][1],
+                    'shuffled_option_d': options[3][1],
+                }
+                
+                # Find which shuffled option is the correct one
+                correct_letter = question.correct_answer.lower()
+                for i, (orig_letter, content) in enumerate(options):
+                    if orig_letter == correct_letter:
+                        shuffled_data['shuffled_answer'] = chr(ord('a') + i)
+                        break
+                
                 ExamQuestion.objects.create(
                     exam=exam,
                     question=question,
-                    question_order=idx + 1
+                    question_order=idx + 1,
+                    **shuffled_data
                 )
             except Question.DoesNotExist:
                 continue
@@ -239,10 +269,17 @@ class ExamAttemptViewSet(viewsets.ModelViewSet):
     filterset_fields = ['exam', 'student', 'status']
 
     def get_permissions(self):
+        # Read-only actions are accessible to all authenticated users (admin/teacher need to view attempts)
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        # Write actions (start_exam, submit_answer, submit_exam, mark_for_review) are student-only
         return [permissions.IsAuthenticated(), IsStudent()]
 
     def get_queryset(self):
-        return ExamAttempt.objects.filter(student=self.request.user)
+        user = self.request.user
+        if user.role in ['admin', 'teacher']:
+            return ExamAttempt.objects.all()
+        return ExamAttempt.objects.filter(student=user)
     
     @action(detail=False, methods=['post'])
     def start_exam(self, request):
@@ -276,21 +313,27 @@ class ExamAttemptViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Create new attempt
-        attempt = ExamAttempt.objects.create(
-            exam=exam,
-            student=request.user
-        )
-        
-        # Create student answers for each question
-        for eq in exam.exam_questions.all():
-            StudentAnswer.objects.create(
-                attempt=attempt,
-                exam_question=eq
+        try:
+            # Create new attempt
+            attempt = ExamAttempt.objects.create(
+                exam=exam,
+                student=request.user
             )
-        
-        serializer = ExamAttemptSerializer(attempt)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            # Create student answers for each question
+            for eq in exam.exam_questions.all():
+                StudentAnswer.objects.create(
+                    attempt=attempt,
+                    exam_question=eq,
+                    answer=""
+                )
+            
+            serializer = ExamAttemptSerializer(attempt)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['post'])
     def submit_answer(self, request, pk=None):

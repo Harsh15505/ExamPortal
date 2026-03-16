@@ -233,7 +233,7 @@ export default function ManageExams() {
     setShowLinkModal(true)
     setLinkLoading(true)
     try {
-      const response = await examAPI.listQuestions({ subject: exam.subject })
+      const response = await examAPI.listQuestions({ subject: exam.subject, page_size: 1000 })
       const data = response.data || response
       const questions = Array.isArray(data) ? data : data.results || []
       setAllQuestions(questions)
@@ -688,124 +688,145 @@ export default function ManageExams() {
         </div>
 
         {showLinkModal && (
-          <div className="card mt-4 border-info">
-            <div className="card-header bg-info text-white d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Link Questions: {linkExam?.title}</h5>
-              <button
-                type="button"
-                className="btn btn-sm btn-light"
-                onClick={() => {
-                  setShowLinkModal(false)
-                  setLinkExam(null)
-                  setSelectedQuestionIds([])
-                }}
-              >
-                Close
-              </button>
-            </div>
-            <div className="card-body">
-              {linkLoading ? (
-                <div className="text-center py-3">
-                  <div className="spinner-border" role="status">
-                    <span className="visually-hidden">Loading questions...</span>
-                  </div>
-                </div>
-              ) : allQuestions.length === 0 ? (
-                <div className="alert alert-warning mb-0">
-                  No questions found for this subject. Create questions first.
-                </div>
-              ) : (
-                <>
-                  <div className="row g-2 mb-3">
-                    <div className="col-md-6">
-                      <input
-                        className="form-control form-control-sm"
-                        placeholder="Search question/topic"
-                        value={linkSearch}
-                        onChange={(e) => setLinkSearch(e.target.value)}
-                      />
-                    </div>
-                    <div className="col-md-3">
-                      <select className="form-select form-select-sm" value={linkDifficulty} onChange={(e) => setLinkDifficulty(e.target.value)}>
-                        <option value="all">All Difficulty</option>
-                        <option value="easy">Easy</option>
-                        <option value="medium">Medium</option>
-                        <option value="hard">Hard</option>
-                      </select>
-                    </div>
-                    <div className="col-md-3">
-                      <select className="form-select form-select-sm" value={linkType} onChange={(e) => setLinkType(e.target.value)}>
-                        <option value="all">All Types</option>
-                        <option value="mcq">MCQ</option>
-                        <option value="true_false">True/False</option>
-                      </select>
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 1050,
+            padding: '20px'
+          }}>
+            <div className="card border-0 shadow-lg" style={{ 
+              width: '100%', maxWidth: '900px', maxHeight: '90vh', 
+              background: 'var(--bg-elevated)', borderRadius: '18px',
+              display: 'flex', flexDirection: 'column'
+            }}>
+              <div className="card-header border-0 py-3 d-flex justify-content-between align-items-center" style={{ background: 'var(--primary-glow)', color: 'var(--primary-light)' }}>
+                <h5 className="mb-0 fw-bold">🎯 Link Questions: {linkExam?.title}</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  style={{ filter: 'invert(1)' }}
+                  onClick={() => {
+                    setShowLinkModal(false)
+                    setLinkExam(null)
+                    setSelectedQuestionIds([])
+                  }}
+                />
+              </div>
+              <div className="card-body p-4" style={{ overflowY: 'auto' }}>
+                {linkLoading ? (
+                  <div className="text-center py-3">
+                    <div className="spinner-border" role="status">
+                      <span className="visually-hidden">Loading questions...</span>
                     </div>
                   </div>
+                ) : allQuestions.length === 0 ? (
+                  <div className="alert alert-warning mb-0">
+                    No questions found for this subject. Create questions first.
+                  </div>
+                ) : (
+                  <>
+                    <div className="row g-2 mb-3">
+                      <div className="col-md-6">
+                        <input
+                          className="form-control form-control-sm"
+                          placeholder="Search question/topic"
+                          value={linkSearch}
+                          onChange={(e) => setLinkSearch(e.target.value)}
+                        />
+                      </div>
+                      <div className="col-md-3">
+                        <select className="form-select form-select-sm" value={linkDifficulty} onChange={(e) => setLinkDifficulty(e.target.value)}>
+                          <option value="all">All Difficulty</option>
+                          <option value="easy">Easy</option>
+                          <option value="medium">Medium</option>
+                          <option value="hard">Hard</option>
+                        </select>
+                      </div>
+                      <div className="col-md-3">
+                        <select className="form-select form-select-sm" value={linkType} onChange={(e) => setLinkType(e.target.value)}>
+                          <option value="all">All Types</option>
+                          <option value="mcq">MCQ</option>
+                          <option value="true_false">True/False</option>
+                        </select>
+                      </div>
+                    </div>
 
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                      <strong>Selected:</strong> {selectedQuestionIds.length}
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <div>
+                        <strong>Selected:</strong> {selectedQuestionIds.length}
+                      </div>
+                      <div className="d-flex gap-2">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => setSelectedQuestionIds(allQuestions.map(q => q.id))}
+                        >
+                          Select All
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => setSelectedQuestionIds([])}
+                        >
+                          Clear
+                        </button>
+                      </div>
                     </div>
-                    <div className="d-flex gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => setSelectedQuestionIds(getFilteredLinkQuestions().map((q) => q.id))}
-                      >
-                        Select All
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => setSelectedQuestionIds([])}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
 
-                  <div className="table-responsive" style={{ maxHeight: '350px', overflowY: 'auto' }}>
-                    <table className="table table-sm table-hover">
-                      <thead className="table-light">
-                        <tr>
-                          <th style={{ width: '60px' }}>Pick</th>
-                          <th>Question</th>
-                          <th>Type</th>
-                          <th>Difficulty</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {getFilteredLinkQuestions().map((q) => (
-                          <tr key={q.id}>
-                            <td>
-                              <input
-                                type="checkbox"
-                                className="form-check-input"
-                                checked={selectedQuestionIds.includes(q.id)}
-                                onChange={() => toggleQuestionSelection(q.id)}
-                              />
-                            </td>
-                            <td>{q.question_text}</td>
-                            <td>{q.question_type === 'mcq' ? 'MCQ' : 'T/F'}</td>
-                            <td>{q.difficulty_level}</td>
+                    <div className="table-responsive" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                      <table className="table table-sm table-hover">
+                        <thead className="table-light">
+                          <tr>
+                            <th style={{ width: '60px' }}>Pick</th>
+                            <th>Question</th>
+                            <th>Type</th>
+                            <th>Difficulty</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {getFilteredLinkQuestions().map((q) => (
+                            <tr key={q.id}>
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  className="form-check-input"
+                                  checked={selectedQuestionIds.includes(q.id)}
+                                  onChange={() => toggleQuestionSelection(q.id)}
+                                />
+                              </td>
+                              <td>{q.question_text}</td>
+                              <td>{q.question_type === 'mcq' ? 'MCQ' : 'T/F'}</td>
+                              <td>{q.difficulty_level}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
 
-                  <div className="d-flex gap-2 mt-3">
-                    <button
-                      type="button"
-                      className="btn btn-success"
-                      disabled={linkSaving}
-                      onClick={saveLinkedQuestions}
-                    >
-                      {linkSaving ? 'Linking...' : 'Save Linked Questions'}
-                    </button>
-                  </div>
-                </>
-              )}
+                    <div className="d-flex gap-2 mt-4">
+                      <button
+                        type="button"
+                        className="btn btn-primary px-4"
+                        disabled={linkSaving}
+                        onClick={saveLinkedQuestions}
+                      >
+                        {linkSaving ? 'Saving...' : 'Save Selection'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary px-4"
+                        onClick={() => {
+                          setShowLinkModal(false)
+                          setLinkExam(null)
+                          setSelectedQuestionIds([])
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}

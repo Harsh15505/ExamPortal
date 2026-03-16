@@ -126,10 +126,12 @@ class ExamCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
         fields = [
-            'title', 'subject', 'description', 'duration_minutes', 'total_questions',
+            'id', 'title', 'subject', 'description', 'duration_minutes', 'total_questions',
             'marks_per_question', 'negative_mark', 'pass_mark', 'start_time', 'end_time',
-            'result_mode', 'selection_mode', 'auto_easy', 'auto_medium', 'auto_hard', 'is_published'
+            'result_mode', 'selection_mode', 'auto_easy', 'auto_medium', 'auto_hard',
+            'is_published', 'created_by', 'created_at', 'updated_at'
         ]
+        read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
 
 
 # Exam Attempt Serializers
@@ -165,11 +167,13 @@ class ResultSerializer(serializers.ModelSerializer):
     exam_title = serializers.CharField(source='attempt.exam.title', read_only=True)
     attempt_id = serializers.CharField(source='attempt.id', read_only=True)
     exam_id = serializers.CharField(source='attempt.exam.id', read_only=True)
+    # Embed full attempt (with answers) so Results page only needs one API call
+    attempt = ExamAttemptSerializer(read_only=True)
     
     class Meta:
         model = Result
         fields = [
-            'id', 'attempt_id', 'exam_id', 'exam_title', 'student_username',
+            'id', 'attempt_id', 'attempt', 'exam_id', 'exam_title', 'student_username',
             'total_correct', 'total_wrong', 'total_skipped',
             'score_obtained', 'max_score', 'percentage', 'is_pass',
             'status', 'published_at', 'created_at', 'updated_at'
@@ -181,11 +185,13 @@ class ResultListSerializer(serializers.ModelSerializer):
     student_username = serializers.CharField(source='attempt.student.username', read_only=True)
     exam_title = serializers.CharField(source='attempt.exam.title', read_only=True)
     exam_id = serializers.CharField(source='attempt.exam.id', read_only=True)
+    # attempt_id is needed so the frontend can navigate to /results/:attemptId correctly
+    attempt_id = serializers.CharField(source='attempt.id', read_only=True)
     
     class Meta:
         model = Result
         fields = [
-            'id', 'exam_id', 'exam_title', 'student_username',
+            'id', 'attempt_id', 'exam_id', 'exam_title', 'student_username',
             'score_obtained', 'max_score', 'percentage', 'is_pass',
             'status', 'created_at'
         ]

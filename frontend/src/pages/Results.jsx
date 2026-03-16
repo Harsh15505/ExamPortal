@@ -23,12 +23,13 @@ export default function Results() {
       setLoading(true)
       setError('')
       const resultResponse = await examAPI.getResult(attemptId)
-      setResult(resultResponse.data || resultResponse)
-      const attemptResponse = await examAPI.getAttempt(attemptId)
-      setAttempt(attemptResponse.data || attemptResponse)
+      const resultData = resultResponse.data || resultResponse
+      setResult(resultData)
+      // attempt is now embedded inside the result response (no second API call needed)
+      setAttempt(resultData.attempt || null)
     } catch (err) {
       console.error('Failed to load results:', err)
-      setError({ type: 'danger', message: err.response?.data?.detail || err.message || 'Failed to load results' })
+      setError({ type: 'danger', message: err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to load results' })
     } finally {
       setLoading(false)
     }
