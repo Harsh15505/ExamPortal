@@ -15,10 +15,11 @@ const roleConfig = {
 }
 
 const demoByRole = {
-  student: { username: 'demo_student', password: 'Student@123', label: 'Student Demo' },
-  teacher: { username: 'demo_teacher', password: 'Teacher@123', label: 'Teacher Demo' },
-  admin:   { username: 'demo_admin',   password: 'Admin@123',   label: 'Admin Demo' },
+  student: { username: 'student_01',    password: 'Student@123', label: 'Student Demo' },
+  teacher: { username: 'teacher_math',  password: 'Teacher@123', label: 'Teacher Demo' },
+  admin:   { username: 'demo_admin',    password: 'Admin@123',   label: 'Admin Demo' },
 }
+
 
 export default function RoleLogin({ expectedRole, backTo = '/login' }) {
   const [username, setUsername] = useState('')
